@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import CounterDisplay from './components/CounterDisplay'
-import HistogramChart from './components/HistogramChart'
 import IssueCounterDisplay from './components/IssueCounterDisplay'
-import IssueHistogramChart from './components/IssueHistogramChart'
+import Chart from './components/Chart'
 
 interface CounterData {
   total: number
@@ -83,22 +82,13 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Histograms */}
-        <div className="grid md:grid-cols-2 gap-8 w-full">
-          {/* Right Counter Histogram */}
+        {/* Combined Chart */}
+        <div className="w-full">
           <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-white/20">
             <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">
-              "Absolutely Right" Activity (Last 30 Days)
+              Phrase Activity Comparison (Last 14 Days)
             </h3>
-            <HistogramChart data={stats.right.dailyCounts} />
-          </div>
-
-          {/* Issue Detection Histogram */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-white/20">
-            <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">
-              Issue Detection Activity (Last 30 Days)
-            </h3>
-            <IssueHistogramChart data={stats.issue.dailyCounts} />
+            <Chart rightData={stats.right.dailyCounts} issueData={stats.issue.dailyCounts} />
           </div>
         </div>
 

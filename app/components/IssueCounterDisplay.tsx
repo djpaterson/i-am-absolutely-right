@@ -67,7 +67,7 @@ export default function IssueCounterDisplay({ count, isLoading }: IssueCounterDi
       
       <div className="mt-6 text-center">
         <p className="text-lg md:text-xl text-gray-600 font-medium">
-          Times I spotted the issue
+          Times Claude spotted the issue
         </p>
         {isAnimating && (
           <p className="text-sm text-orange-600 mt-2 animate-bounce">
