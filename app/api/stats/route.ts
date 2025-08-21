@@ -6,8 +6,8 @@ export async function GET() {
     // Check if Redis is available
     if (!process.env.REDIS_URL) {
       // Return demo data for local development
-      const rightDailyCounts = []
-      const issueDailyCounts = []
+      const rightDailyCounts: { date: string; count: number }[] = []
+      const issueDailyCounts: { date: string; count: number }[] = []
       const today = new Date()
       
       for (let i = 29; i >= 0; i--) {
@@ -51,8 +51,8 @@ export async function GET() {
         redis.get('issue-counter:total')
       ])
       
-      const rightDailyCounts = []
-      const issueDailyCounts = []
+      const rightDailyCounts: { date: string; count: number }[] = []
+      const issueDailyCounts: { date: string; count: number }[] = []
       const today = new Date()
       
       // Get daily data for last 30 days
