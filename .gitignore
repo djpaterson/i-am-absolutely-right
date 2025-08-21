@@ -74,3 +74,6 @@ yarn-error.log*
 # IDE
 .vscode/
 .idea/
+
+# Hook tracking files
+.processed-messages.json
