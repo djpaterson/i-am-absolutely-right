@@ -132,38 +132,58 @@ function incrementCounter() {
 }
 
 function processInput() {
-  // Read from stdin (Claude Code output)
+  // Read JSON input from stdin (Claude Code hook format)
   let buffer = '';
   
   process.stdin.on('data', (data) => {
     buffer += data.toString();
-    
-    // Check for the trigger phrase
-    if (buffer.includes(TRIGGER_PHRASE)) {
-      // Count occurrences in this chunk
-      const matches = (buffer.match(new RegExp(TRIGGER_PHRASE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
-      
-      // Increment counter for each occurrence
-      for (let i = 0; i < matches; i++) {
-        incrementCounter();
-      }
-      
-      // Reset buffer to avoid double counting
-      buffer = '';
-    }
-    
-    // Keep buffer size manageable (last 1000 chars)
-    if (buffer.length > 1000) {
-      buffer = buffer.slice(-1000);
-    }
   });
 
   process.stdin.on('end', () => {
-    // Final check on remaining buffer
-    if (buffer.includes(TRIGGER_PHRASE)) {
-      const matches = (buffer.match(new RegExp(TRIGGER_PHRASE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
-      for (let i = 0; i < matches; i++) {
-        incrementCounter();
+    try {
+      // Parse the JSON input from Claude Code
+      const hookData = JSON.parse(buffer);
+      
+      if (hookData.transcript_path) {
+        // Read the transcript file
+        const transcript = JSON.parse(fs.readFileSync(hookData.transcript_path, 'utf8'));
+        
+        // Get the last assistant message
+        const messages = transcript.messages || [];
+        const lastAssistantMessage = messages
+          .filter(msg => msg.role === 'assistant')
+          .pop();
+        
+        if (lastAssistantMessage && lastAssistantMessage.content) {
+          const content = Array.isArray(lastAssistantMessage.content) 
+            ? lastAssistantMessage.content.map(c => c.text || c).join(' ')
+            : lastAssistantMessage.content;
+          
+          // Check for the trigger phrase
+          if (content.includes(TRIGGER_PHRASE)) {
+            const matches = (content.match(new RegExp(TRIGGER_PHRASE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
+            
+            for (let i = 0; i < matches; i++) {
+              incrementCounter();
+            }
+          }
+        }
+      } else {
+        // Fallback: treat input as plain text (for manual testing)
+        if (buffer.includes(TRIGGER_PHRASE)) {
+          const matches = (buffer.match(new RegExp(TRIGGER_PHRASE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
+          for (let i = 0; i < matches; i++) {
+            incrementCounter();
+          }
+        }
+      }
+    } catch (error) {
+      // If JSON parsing fails, treat as plain text (backward compatibility)
+      if (buffer.includes(TRIGGER_PHRASE)) {
+        const matches = (buffer.match(new RegExp(TRIGGER_PHRASE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
+        for (let i = 0; i < matches; i++) {
+          incrementCounter();
+        }
       }
     }
   });
