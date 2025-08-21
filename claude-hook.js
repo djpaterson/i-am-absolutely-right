@@ -131,7 +131,33 @@ function incrementCounter() {
   });
 }
 
+// Track processed messages to prevent duplicates
+const PROCESSED_IDS_FILE = path.join(__dirname, '.processed-messages.json');
+
+function loadProcessedIds() {
+  try {
+    if (fs.existsSync(PROCESSED_IDS_FILE)) {
+      const data = JSON.parse(fs.readFileSync(PROCESSED_IDS_FILE, 'utf8'));
+      return new Set(data);
+    }
+  } catch (error) {
+    console.log('⚠️ Could not load processed message IDs:', error.message);
+  }
+  return new Set();
+}
+
+function saveProcessedIds(processedIds) {
+  try {
+    fs.writeFileSync(PROCESSED_IDS_FILE, JSON.stringify([...processedIds]));
+  } catch (error) {
+    console.log('⚠️ Could not save processed message IDs:', error.message);
+  }
+}
+
 function processInput() {
+  // Load processed IDs from file
+  const processedMessageIds = loadProcessedIds();
+  
   // Read JSON input from stdin (Claude Code hook format)
   let buffer = '';
   
@@ -145,27 +171,62 @@ function processInput() {
       const hookData = JSON.parse(buffer);
       
       if (hookData.transcript_path) {
-        // Read the transcript file
-        const transcript = JSON.parse(fs.readFileSync(hookData.transcript_path, 'utf8'));
+        // Read the JSONL transcript file
+        const transcriptContent = fs.readFileSync(hookData.transcript_path, 'utf8');
+        const lines = transcriptContent.trim().split('\n');
+        
+        // Parse each line as JSON and find assistant messages
+        const assistantMessages = [];
+        for (const line of lines) {
+          try {
+            const entry = JSON.parse(line);
+            if (entry.type === 'assistant' && entry.message && entry.message.role === 'assistant') {
+              assistantMessages.push(entry);
+            }
+          } catch (parseError) {
+            // Skip invalid lines
+          }
+        }
         
         // Get the last assistant message
-        const messages = transcript.messages || [];
-        const lastAssistantMessage = messages
-          .filter(msg => msg.role === 'assistant')
-          .pop();
+        const lastAssistantMessage = assistantMessages[assistantMessages.length - 1];
         
-        if (lastAssistantMessage && lastAssistantMessage.content) {
-          const content = Array.isArray(lastAssistantMessage.content) 
-            ? lastAssistantMessage.content.map(c => c.text || c).join(' ')
-            : lastAssistantMessage.content;
+        if (lastAssistantMessage && lastAssistantMessage.message) {
+          const messageId = lastAssistantMessage.uuid;
+          const message = lastAssistantMessage.message;
+          
+          // Skip if we've already processed this message
+          if (processedMessageIds.has(messageId)) {
+            console.log(`🔄 Already processed message ${messageId}`);
+            return;
+          }
+          
+          // Extract text content from the message
+          let textContent = '';
+          if (message.content && Array.isArray(message.content)) {
+            textContent = message.content
+              .filter(c => c.type === 'text')
+              .map(c => c.text)
+              .join(' ');
+          }
           
           // Check for the trigger phrase
-          if (content.includes(TRIGGER_PHRASE)) {
-            const matches = (content.match(new RegExp(TRIGGER_PHRASE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
+          if (textContent.includes(TRIGGER_PHRASE)) {
+            const matches = (textContent.match(new RegExp(TRIGGER_PHRASE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
+            
+            console.log(`🎯 Found "${TRIGGER_PHRASE}" ${matches} time(s) in message ${messageId}`);
             
             for (let i = 0; i < matches; i++) {
               incrementCounter();
             }
+            
+            // Mark this message as processed
+            processedMessageIds.add(messageId);
+            saveProcessedIds(processedMessageIds);
+          } else {
+            // Still mark as processed to avoid checking again
+            processedMessageIds.add(messageId);
+            saveProcessedIds(processedMessageIds);
           }
         }
       } else {
@@ -178,6 +239,7 @@ function processInput() {
         }
       }
     } catch (error) {
+      console.error('❌ Error processing hook input:', error.message);
       // If JSON parsing fails, treat as plain text (backward compatibility)
       if (buffer.includes(TRIGGER_PHRASE)) {
         const matches = (buffer.match(new RegExp(TRIGGER_PHRASE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
