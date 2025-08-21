@@ -38,9 +38,8 @@ A fun webpage that tracks how many times Claude Code says "You're absolutely rig
    Or manually create `.env.development.local` with:
    ```
    API_SECRET=your-generated-secret
-   KV_REST_API_URL=your-redis-url
-   KV_REST_API_TOKEN=your-redis-token
-   # ... other Redis environment variables
+   REDIS_URL=redis://default:password@host:port
+   COUNTER_API_URL=https://absolutely-right.lefley.dev/api/increment
    ```
 
 3. **Run development server**:
@@ -123,11 +122,13 @@ The hook automatically loads configuration from `.env.development.local`.
 
 ### Manual Configuration
 
-If you can't use `vercel env pull`, add these to `.env.development.local`:
+If you can't use `vercel env pull`, create `.env.development.local` with:
 ```
 API_SECRET=your-generated-secret
 COUNTER_API_URL=https://absolutely-right.lefley.dev/api/increment
 ```
+
+Note: The hook only needs these two variables - the Redis connection is not required for the hook itself.
 
 ## API Endpoints
 
