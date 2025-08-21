@@ -57,7 +57,7 @@ function loadEnvFile() {
 loadEnvFile();
 
 // Configuration
-const API_URL = process.env.COUNTER_API_URL || 'https://absolutely-right.lefley.dev/api/increment';
+const API_URL = process.env.COUNTER_API_URL || 'https://absolutely-right.djpaterson.dev/api/increment';
 const API_SECRET = process.env.API_SECRET;
 const TRIGGER_PHRASE = "You're absolutely right!";
 
