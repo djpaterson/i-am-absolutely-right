@@ -23,7 +23,9 @@ const path = require('path');
 
 // Load environment variables from .env.development.local
 function loadEnvFile() {
-  const envPath = path.join(__dirname, '.env.development.local');
+  // Use absolute path to the hook's directory, not the current working directory
+  const scriptDir = path.dirname(path.resolve(__filename));
+  const envPath = path.join(scriptDir, '.env.development.local');
   try {
     if (fs.existsSync(envPath)) {
       const envContent = fs.readFileSync(envPath, 'utf8');
@@ -132,7 +134,9 @@ function incrementCounter() {
 }
 
 // Track processed messages to prevent duplicates
-const PROCESSED_IDS_FILE = path.join(__dirname, '.processed-messages.json');
+// Use absolute path to the hook's directory, not the current working directory
+const scriptDir = path.dirname(path.resolve(__filename));
+const PROCESSED_IDS_FILE = path.join(scriptDir, '.processed-messages.json');
 
 function loadProcessedIds() {
   try {
