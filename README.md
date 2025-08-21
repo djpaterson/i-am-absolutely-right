@@ -24,7 +24,7 @@ vercel env pull .env.development.local
 # Or manually create .env.development.local with:
 # API_SECRET=your-secret
 # REDIS_URL=redis://...
-# COUNTER_API_URL=https://absolutely-right.lefley.dev/api/increment
+# COUNTER_API_URL=https://your-domain.com/api/increment
 
 npm run dev
 ```
