@@ -3,8 +3,10 @@ import { kv } from '@vercel/kv'
 
 export async function GET() {
   try {
-    // Check if KV is available (for local development)
-    const isKvAvailable = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
+    // Check if Redis is available
+    const isKvAvailable = process.env.REDIS_URL || 
+                         (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) ||
+                         process.env.KV_URL
     
     if (!isKvAvailable) {
       // Return demo data for local development

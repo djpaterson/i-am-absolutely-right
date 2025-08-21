@@ -3,6 +3,18 @@ import { kv } from '@vercel/kv'
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Redis is available
+    const isRedisAvailable = process.env.REDIS_URL || 
+                            (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) ||
+                            process.env.KV_URL
+    
+    if (!isRedisAvailable) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 500 }
+      )
+    }
+    
     // Check authentication
     const authHeader = request.headers.get('authorization')
     const expectedToken = process.env.API_SECRET
