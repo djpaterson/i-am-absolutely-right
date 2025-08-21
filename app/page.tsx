@@ -91,7 +91,7 @@ export default function Home() {
           <p>Powered by Claude Code enthusiasm 🤖</p>
           <p>
             <a 
-              href="https://github.com/TomLefley/i-am-absolutely-right" 
+              href="https://github.com/djpaterson/i-am-absolutely-right" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-blue-500 hover:text-blue-600 transition-colors underline"

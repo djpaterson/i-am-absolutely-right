@@ -267,7 +267,7 @@ if (require.main === module) {
 Claude Code Hook - "You're Absolutely Right!" Counter
 
 Environment Variables:
-  COUNTER_API_URL      API endpoint URL (default: https://absolutely-right.lefley.dev/api/increment)
+  COUNTER_API_URL      API endpoint URL (default: https://absolutely-right.djpaterson.dev/api/increment)
   COUNTER_API_SECRET   API secret token (required)
 
 Usage:

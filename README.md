@@ -2,7 +2,7 @@
 
 A fun webpage that tracks how many times Claude Code says "You're absolutely right!" with a beautiful counter display and histogram showing daily activity. 
 
-🔗 [absolutely-right.lefley.dev](https://absolutely-right.lefley.dev)
+🔗 [absolutely-right.djpaterson.dev](https://absolutely-right.djpaterson.dev)
 
 ## Tech Stack
 
@@ -14,7 +14,7 @@ A fun webpage that tracks how many times Claude Code says "You're absolutely rig
 ## Local Installation
 
 ```bash
-git clone https://github.com/TomLefley/i-am-absolutely-right.git
+git clone https://github.com/djpaterson/i-am-absolutely-right.git
 cd i-am-absolutely-right
 npm install
 

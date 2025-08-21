@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "You're Absolutely Right! Counter",
     description: 'A fun counter tracking Claude Code\'s favorite phrase',
-    url: 'https://absolutely-right.lefley.dev',
+    url: 'https://absolutely-right.djpaterson.dev',
     siteName: "You're Absolutely Right! Counter",
     type: 'website',
   },
