@@ -67,7 +67,7 @@ export default function CounterDisplay({ count, isLoading }: CounterDisplayProps
       
       <div className="mt-6 text-center">
         <p className="text-lg md:text-xl text-gray-600 font-medium">
-          Times Claude Code was absolutely right
+          Times I was absolutely right
         </p>
         {isAnimating && (
           <p className="text-sm text-green-600 mt-2 animate-bounce">

@@ -39,11 +39,11 @@ export default function Home() {
       <div className="max-w-4xl w-full space-y-12">
         {/* Header */}
         <div className="text-center space-y-4">
-          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            "You're Absolutely Right!"
+          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent px-4 py-2">
+            "You're absolutely right!"
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 font-light">
-            Claude Code Confidence Counter
+            Claude code confidence counter
           </p>
         </div>
 
@@ -87,8 +87,18 @@ export default function Home() {
         </div>
 
         {/* Footer */}
-        <div className="text-center text-gray-500 text-sm">
+        <div className="text-center text-gray-500 text-sm space-y-2">
           <p>Powered by Claude Code enthusiasm 🤖</p>
+          <p>
+            <a 
+              href="https://github.com/TomLefley/i-am-absolutely-right" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:text-blue-600 transition-colors underline"
+            >
+              View source on GitHub
+            </a>
+          </p>
         </div>
       </div>
     </main>
