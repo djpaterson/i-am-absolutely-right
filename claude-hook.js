@@ -8,9 +8,7 @@
  * 
  * Setup:
  * 1. Make sure this script is executable: chmod +x claude-hook.js
- * 2. Set your API endpoint and secret as environment variables:
- *    export COUNTER_API_URL="https://absolutely-right.lefley.dev/api/increment"
- *    export COUNTER_API_SECRET="your-api-secret-here"
+ * 2. API configuration is automatically loaded from .env.development.local
  * 3. Configure this as a Claude Code hook
  * 
  * Usage as Claude Code Hook:
@@ -20,10 +18,40 @@
 const https = require('https');
 const http = require('http');
 const url = require('url');
+const fs = require('fs');
+const path = require('path');
+
+// Load environment variables from .env.development.local
+function loadEnvFile() {
+  const envPath = path.join(__dirname, '.env.development.local');
+  try {
+    if (fs.existsSync(envPath)) {
+      const envContent = fs.readFileSync(envPath, 'utf8');
+      const lines = envContent.split('\n');
+      
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('#')) {
+          const [key, ...valueParts] = trimmed.split('=');
+          if (key && valueParts.length > 0) {
+            const value = valueParts.join('=');
+            process.env[key] = value;
+          }
+        }
+      }
+      console.log('✅ Loaded environment from .env.development.local');
+    }
+  } catch (error) {
+    console.log('⚠️ Could not load .env.development.local:', error.message);
+  }
+}
+
+// Load env file first
+loadEnvFile();
 
 // Configuration
 const API_URL = process.env.COUNTER_API_URL || 'https://absolutely-right.lefley.dev/api/increment';
-const API_SECRET = process.env.COUNTER_API_SECRET;
+const API_SECRET = process.env.API_SECRET;
 const TRIGGER_PHRASE = "You're absolutely right!";
 
 // Validate configuration

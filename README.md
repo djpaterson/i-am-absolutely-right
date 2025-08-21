@@ -1,4 +1,4 @@
-# "You're Absolutely Right!" Counter
+# "You're absolutely right!" counter
 
 A fun webpage that tracks how many times Claude Code says "You're absolutely right!" with a beautiful counter display and histogram showing daily activity.
 
@@ -16,7 +16,7 @@ A fun webpage that tracks how many times Claude Code says "You're absolutely rig
 
 - **Frontend**: Next.js 14, React, TypeScript, Tailwind CSS
 - **Charts**: Recharts
-- **Database**: Vercel KV (Redis)
+- **Database**: Redis (via Vercel)
 - **Hosting**: Vercel
 - **Security**: Bearer token authentication
 
@@ -24,19 +24,23 @@ A fun webpage that tracks how many times Claude Code says "You're absolutely rig
 
 1. **Clone and install dependencies**:
    ```bash
-   git clone https://github.com/your-username/i-am-absolutely-right.git
+   git clone https://github.com/TomLefley/i-am-absolutely-right.git
    cd i-am-absolutely-right
    npm install
    ```
 
 2. **Set up environment variables**:
+   If you have access to the Vercel project:
    ```bash
-   cp .env.example .env.local
+   vercel env pull .env.development.local
    ```
    
-   Edit `.env.local` and add:
+   Or manually create `.env.development.local` with:
    ```
-   API_SECRET=your-super-secret-api-key-here
+   API_SECRET=your-generated-secret
+   KV_REST_API_URL=your-redis-url
+   KV_REST_API_TOKEN=your-redis-token
+   # ... other Redis environment variables
    ```
 
 3. **Run development server**:
@@ -59,16 +63,16 @@ A fun webpage that tracks how many times Claude Code says "You're absolutely rig
    - Build Command: `npm run build`
    - Output Directory: `.next`
 
-### 2. Enable Vercel KV Storage
+### 2. Enable Redis Storage
 
 1. In your Vercel project dashboard, go to **Storage** tab
 2. Click **Create Database**
-3. Select **KV** (Key-Value Store)
-4. Choose a database name: `absolutely-right-counter`
+3. Select **Redis** (Serverless Redis)
+4. Choose a database name (e.g., `redis-i-am-absolutely-right`)
 5. Select your preferred region
 6. Click **Create**
 
-Vercel will automatically add the KV environment variables to your project.
+Vercel will automatically add the Redis environment variables to your project.
 
 ### 3. Add Environment Variables
 
@@ -90,34 +94,40 @@ In your Vercel project settings, add:
 
 ## Setting Up Claude Code Hook
 
-### Option 1: Environment Variables
+The hook automatically loads configuration from `.env.development.local`.
 
-Set up the hook with environment variables:
+### Setup Steps
 
-```bash
-export COUNTER_API_URL="https://absolutely-right.lefley.dev/api/increment"
-export COUNTER_API_SECRET="your-api-secret-here"
-```
+1. **Pull environment variables** (if you have Vercel access):
+   ```bash
+   vercel env pull .env.development.local
+   ```
 
-### Option 2: Claude Code Hook Configuration
-
-1. **Test the hook**:
+2. **Test the hook**:
    ```bash
    node claude-hook.js --test
    ```
 
-2. **Configure as Claude Code hook**:
+3. **Configure as Claude Code hook**:
    - Add the script path to your Claude Code hook configuration
    - Or pipe Claude Code output through the script:
      ```bash
      claude-code | node claude-hook.js
      ```
 
-3. **Monitor in real-time**:
+4. **Monitor in real-time**:
    ```bash
    node claude-hook.js
    # Then use Claude Code - the hook will detect "You're absolutely right!"
    ```
+
+### Manual Configuration
+
+If you can't use `vercel env pull`, add these to `.env.development.local`:
+```
+API_SECRET=your-generated-secret
+COUNTER_API_URL=https://absolutely-right.lefley.dev/api/increment
+```
 
 ## API Endpoints
 
@@ -150,7 +160,7 @@ Protected endpoint to increment the counter:
 
 ## Data Storage
 
-Uses Vercel KV (Redis) with:
+Uses Redis with:
 - `counter:total` - Overall counter value
 - `daily:YYYY-MM-DD` - Daily counts with 60-day TTL
 - Atomic increment operations for consistency
@@ -172,7 +182,7 @@ Uses Vercel KV (Redis) with:
 
 ## License
 
-MIT License - see LICENSE file for details.
+GPL-3.0 License - see LICENSE file for details.
 
 ---
 
