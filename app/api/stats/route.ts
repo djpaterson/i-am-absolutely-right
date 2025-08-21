@@ -3,10 +3,38 @@ import { kv } from '@vercel/kv'
 
 export async function GET() {
   try {
-    // Get total count
+    // Check if KV is available (for local development)
+    const isKvAvailable = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
+    
+    if (!isKvAvailable) {
+      // Return demo data for local development
+      const dailyCounts = []
+      const today = new Date()
+      
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date(today)
+        date.setDate(date.getDate() - i)
+        const dateStr = date.toISOString().split('T')[0]
+        
+        // Generate some demo data
+        const count = Math.floor(Math.random() * 5)
+        dailyCounts.push({
+          date: dateStr,
+          count
+        })
+      }
+      
+      return NextResponse.json({
+        total: 42,
+        dailyCounts,
+        lastUpdated: new Date().toISOString(),
+        demo: true
+      })
+    }
+    
+    // Production KV logic
     const total = await kv.get('counter:total') || 0
     
-    // Get last 30 days of data
     const dailyCounts = []
     const today = new Date()
     
