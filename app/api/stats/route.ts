@@ -1,14 +1,10 @@
 import { NextResponse } from 'next/server'
-import { kv } from '@vercel/kv'
+import { createClient } from 'redis'
 
 export async function GET() {
   try {
     // Check if Redis is available
-    const isKvAvailable = process.env.REDIS_URL || 
-                         (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) ||
-                         process.env.KV_URL
-    
-    if (!isKvAvailable) {
+    if (!process.env.REDIS_URL) {
       // Return demo data for local development
       const dailyCounts = []
       const today = new Date()
@@ -34,29 +30,36 @@ export async function GET() {
       })
     }
     
-    // Production KV logic
-    const total = await kv.get('counter:total') || 0
+    // Production Redis logic
+    const redis = createClient({ url: process.env.REDIS_URL })
+    await redis.connect()
     
-    const dailyCounts = []
-    const today = new Date()
-    
-    for (let i = 29; i >= 0; i--) {
-      const date = new Date(today)
-      date.setDate(date.getDate() - i)
-      const dateStr = date.toISOString().split('T')[0]
+    try {
+      const total = await redis.get('counter:total') || 0
       
-      const count = await kv.get(`daily:${dateStr}`) || 0
-      dailyCounts.push({
-        date: dateStr,
-        count: Number(count)
+      const dailyCounts = []
+      const today = new Date()
+      
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date(today)
+        date.setDate(date.getDate() - i)
+        const dateStr = date.toISOString().split('T')[0]
+        
+        const count = await redis.get(`daily:${dateStr}`) || 0
+        dailyCounts.push({
+          date: dateStr,
+          count: Number(count)
+        })
+      }
+      
+      return NextResponse.json({
+        total: Number(total),
+        dailyCounts,
+        lastUpdated: new Date().toISOString()
       })
+    } finally {
+      await redis.disconnect()
     }
-    
-    return NextResponse.json({
-      total: Number(total),
-      dailyCounts,
-      lastUpdated: new Date().toISOString()
-    })
     
   } catch (error) {
     console.error('Error fetching stats:', error)

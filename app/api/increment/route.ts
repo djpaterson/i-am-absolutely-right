@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { kv } from '@vercel/kv'
+import { createClient } from 'redis'
 
 export async function POST(request: NextRequest) {
   try {
     // Check if Redis is available
-    const isRedisAvailable = process.env.REDIS_URL || 
-                            (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) ||
-                            process.env.KV_URL
-    
-    if (!isRedisAvailable) {
+    if (!process.env.REDIS_URL) {
       return NextResponse.json(
         { error: 'Database not configured' },
         { status: 500 }
@@ -41,24 +37,32 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get current date for daily tracking
-    const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD format
+    // Connect to Redis
+    const redis = createClient({ url: process.env.REDIS_URL })
+    await redis.connect()
     
-    // Increment counters atomically
-    const [newTotal, newDailyCount] = await Promise.all([
-      kv.incr('counter:total'),
-      kv.incr(`daily:${today}`)
-    ])
+    try {
+      // Get current date for daily tracking
+      const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD format
+      
+      // Increment counters atomically
+      const [newTotal, newDailyCount] = await Promise.all([
+        redis.incr('counter:total'),
+        redis.incr(`daily:${today}`)
+      ])
 
-    // Set TTL for daily counters (60 days)
-    await kv.expire(`daily:${today}`, 60 * 24 * 60 * 60)
-    
-    return NextResponse.json({
-      success: true,
-      total: newTotal,
-      dailyCount: newDailyCount,
-      date: today
-    })
+      // Set TTL for daily counters (60 days)
+      await redis.expire(`daily:${today}`, 60 * 24 * 60 * 60)
+      
+      return NextResponse.json({
+        success: true,
+        total: newTotal,
+        dailyCount: newDailyCount,
+        date: today
+      })
+    } finally {
+      await redis.disconnect()
+    }
     
   } catch (error) {
     console.error('Error incrementing counter:', error)

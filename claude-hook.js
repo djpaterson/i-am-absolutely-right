@@ -34,7 +34,12 @@ function loadEnvFile() {
         if (trimmed && !trimmed.startsWith('#')) {
           const [key, ...valueParts] = trimmed.split('=');
           if (key && valueParts.length > 0) {
-            const value = valueParts.join('=');
+            let value = valueParts.join('=');
+            // Remove surrounding quotes if present
+            if ((value.startsWith('"') && value.endsWith('"')) || 
+                (value.startsWith("'") && value.endsWith("'"))) {
+              value = value.slice(1, -1);
+            }
             process.env[key] = value;
           }
         }
