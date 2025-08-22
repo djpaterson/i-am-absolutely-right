@@ -57,7 +57,7 @@ function loadEnvFile() {
 loadEnvFile();
 
 // Configuration
-const API_URL = process.env.COUNTER_API_URL || 'https://absolutely-right.djpaterson.dev/api/increment';
+const API_URL = process.env.COUNTER_API_URL || 'https://your-domain.com/api/increment';
 const API_SECRET = process.env.API_SECRET;
 const TRIGGER_PHRASE = "You're absolutely right!";
 const ISSUE_PATTERN = /(?:now\s+)?i\s+(?:can\s+)?(?:see|understand|get|found|spot|spotted)\s+the\s+(?:issue|problem|bug)/i;
@@ -292,8 +292,7 @@ if (require.main === module) {
 Claude Code Hook - Claude Phrase Tracker
 
 Environment Variables:
-  COUNTER_API_URL      "Absolutely right" API endpoint (default: https://absolutely-right.djpaterson.dev/api/increment)
-  ISSUE_API_URL        Issue detection API endpoint (default: https://absolutely-right.djpaterson.dev/api/increment-issue)
+  COUNTER_API_URL      API endpoint for both phrase types (default: https://your-domain.com/api/increment)
   API_SECRET           API secret token (required)
 
 Tracked Phrases:
