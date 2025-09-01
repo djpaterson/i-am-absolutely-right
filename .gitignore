@@ -77,3 +77,5 @@ yarn-error.log*
 
 # Hook tracking files
 .processed-messages.json
+
+.playwright-mcp

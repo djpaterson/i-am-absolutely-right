@@ -17,27 +17,25 @@
 
 const https = require('https');
 const http = require('http');
-const url = require('url');
+const { URL } = require('url');
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
 
 // Set NODE_ENV=production when running as Claude hook
 if (!process.env.NODE_ENV) {
-  const args = process.argv.slice(2);
-  const isTestCommand = args.includes('--test') || args.includes('--test-issue') || args.includes('--help') || args.includes('-h');
-  process.env.NODE_ENV = isTestCommand ? 'development' : 'production';
+  process.env.NODE_ENV = 'production';
 }
 
-// Load environment variables with dotenv from script directory
+// Load environment variables with dotenv from script directory (silently)
 const scriptDir = path.dirname(path.resolve(__filename));
-dotenv.config({ path: path.join(scriptDir, '.env') });
-dotenv.config({ path: path.join(scriptDir, `.env.${process.env.NODE_ENV}.local`) });
+dotenv.config({ path: path.join(scriptDir, '.env'), quiet: true });
+dotenv.config({ path: path.join(scriptDir, `.env.${process.env.NODE_ENV}.local`), quiet: true });
 
 // Configuration
 const API_URL = process.env.COUNTER_API_URL || 'https://your-domain.com/api/increment';
 const API_SECRET = process.env.API_SECRET;
-const TRIGGER_PHRASE = "You're absolutely right!";
+const ABSOLUTELY_RIGHT_PHRASE = /you(?:'re| are)\s+(?:(?:absolutely|completely)\s+)?(?:right|correct)\b/i;
 const ISSUE_PATTERN = /(?:now\s+)?i\s+(?:can\s+)?(?:see|understand|get|found|spot|spotted)\s+the\s+(?:issue|problem|bug)/i;
 
 // Validate configuration
@@ -51,7 +49,7 @@ let allMessages = [];
 
 function makeAPIRequest(data) {
   return new Promise((resolve, reject) => {
-    const parsedUrl = url.parse(API_URL);
+    const parsedUrl =  new URL(API_URL);
     const isHttps = parsedUrl.protocol === 'https:';
     const client = isHttps ? https : http;
     
@@ -60,7 +58,7 @@ function makeAPIRequest(data) {
     const options = {
       hostname: parsedUrl.hostname,
       port: parsedUrl.port || (isHttps ? 443 : 80),
-      path: parsedUrl.path,
+      path: parsedUrl.pathname,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -164,6 +162,7 @@ function processInput() {
         let rightCount = 0;
         let issueCount = 0;
         let lastIssuePhrase = '';
+        let lastAbsolutelyRightPhrase = '';
         
         for (const assistantMessage of assistantMessages) {
           const messageId = assistantMessage.uuid;
@@ -184,11 +183,12 @@ function processInput() {
           }
           
           // Check for "absolutely right" phrase
-          if (textContent.includes(TRIGGER_PHRASE)) {
-            const matches = (textContent.match(new RegExp(TRIGGER_PHRASE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
-            rightCount += matches;
+          const rightMatches = textContent.match(ABSOLUTELY_RIGHT_PHRASE);
+          if (rightMatches && rightMatches.length > 0) {
+            rightCount += rightMatches.length;
+            lastAbsolutelyRightPhrase = rightMatches[0];
             
-            for (let i = 0; i < matches; i++) {
+            for (let i = 0; i < rightMatches.length; i++) {
               allApiPromises.push(makeAPIRequest({type: 'right'}));
             }
           }
@@ -207,7 +207,7 @@ function processInput() {
         
         // Build accumulated messages
         if (rightCount > 0) {
-          allMessages.push(`🎯 Detected "${TRIGGER_PHRASE}" ${rightCount} time(s)!`);
+          allMessages.push(`🎯 Detected "${lastAbsolutelyRightPhrase}" ${rightCount} time(s)!`);
         }
         if (issueCount > 0) {
           if (issueCount === 1) {
@@ -229,8 +229,8 @@ function processInput() {
         if (allMessages.length > 0) {
           const combinedMessage = allMessages.join('\n');
           console.log(JSON.stringify({
-            continue: false,
-            stopReason: combinedMessage
+            continue: true,
+            systemMessage: combinedMessage
           }));
         }
         
@@ -239,53 +239,15 @@ function processInput() {
     } catch (error) {
       // Output JSON message for Claude Code display
       console.log(JSON.stringify({
-          continue: false,
-          stopReason: `Failed to parse claude outputs\n${error}\n\n`
+          continue: true,
+          systemMessage: `Failed to parse claude outputs\n${error}\n\n`
         }));
       process.exit(0);
     }
   });
 }
 
-// Handle CLI usage for testing
+// Run as Claude Code hook
 if (require.main === module) {
-  const args = process.argv.slice(2);
-  
-  if (args.includes('--test')) {
-    console.log('🧪 Testing right counter increment...');
-    makeAPIRequest({ type: "right" }).then(() => process.exit(0)).catch((err) => {
-      console.error('Test failed:', err);
-      process.exit(1);
-    });
-  } else if (args.includes('--test-issue')) {
-    console.log('🧪 Testing issue counter increment...');
-    makeAPIRequest({ type: "issue" }).then(() => process.exit(0)).catch((err) => {
-      console.error('Test failed:', err);
-      process.exit(1);
-    });
-  } else if (args.includes('--help') || args.includes('-h')) {
-    console.log(`
-Claude Code Hook - Claude Phrase Tracker
-
-Environment Variables:
-  COUNTER_API_URL      API endpoint for both phrase types (default: https://your-domain.com/api/increment)
-  API_SECRET           API secret token (required)
-
-Tracked Phrases:
-  - "You're absolutely right!"
-  - "I can see the issue" (and variations)
-
-Usage:
-  node claude-hook.js               # Run as hook (reads from stdin)
-  node claude-hook.js --test        # Test "absolutely right" counter API
-  node claude-hook.js --test-issue  # Test issue detection counter API
-  node claude-hook.js --help        # Show this help
-
-As Claude Code Hook:
-  Configure this script as a post-output hook in your Claude Code settings.
-    `);
-  } else {
-    // When running as hook, no debug output - only JSON for Claude Code
-    processInput();
-  }
+  processInput();
 }

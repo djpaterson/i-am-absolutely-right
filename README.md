@@ -97,21 +97,25 @@ Use the Claude Code hooks wizard to add a `Stop` event hook:
 
 **Command**: `NODE_ENV=production /path/to/your/project/claude-hook.js`
 
-### Testing
+### Testing the Claude Hook
 
-Test the hook locally against your development server:
+Use the `test-hook.js` script to test the hook functionality locally:
+
 ```bash
-# Test "absolutely right" counter
-NODE_ENV=development node claude-hook.js --test
+# Test "absolutely right" counter detection
+node test-hook.js --test
 
 # Test issue detection counter  
-NODE_ENV=development node claude-hook.js --test-issue
+node test-hook.js --test-issue
+
+# Test with custom message
+node test-hook.js --text "You are absolutely correct!"
 
 # Show help
-node claude-hook.js --help
+node test-hook.js --help
 ```
 
-The script automatically sets `NODE_ENV=development` for test commands and `NODE_ENV=production` for normal hook execution.
+The test script creates mock Claude Code hook input and validates the complete pipeline including phrase detection and API calls.
 
 ## License
 
