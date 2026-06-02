@@ -50,13 +50,13 @@ export default function IssueCounterDisplay({ count, isLoading }: IssueCounterDi
   return (
     <div className="flex flex-col items-center justify-center py-16">
       <div className={`
-        bg-white/90 backdrop-blur-sm rounded-3xl p-8 md:p-12 
+        bg-white/90 backdrop-blur-sm rounded-3xl w-full p-6 md:p-8
         shadow-2xl border border-white/30 transition-all duration-500
         ${isAnimating ? 'scale-105 glow' : 'scale-100'}
       `}>
         <div className={`
-          text-6xl md:text-8xl lg:text-9xl font-bold 
-          bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 
+          text-5xl md:text-6xl lg:text-7xl font-bold break-all
+          bg-gradient-to-r from-orange-500 via-red-500 to-pink-500
           bg-clip-text text-transparent text-center
           transition-all duration-300
           ${isAnimating ? 'animate-pulse-glow' : ''}
