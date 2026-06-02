@@ -10,48 +10,56 @@ interface DataPoint {
 interface ChartProps {
   rightData: DataPoint[]
   issueData: DataPoint[]
+  honestData: DataPoint[]
 }
 
-export default function Chart({ rightData, issueData }: ChartProps) {
+export default function Chart({ rightData, issueData, honestData }: ChartProps) {
   const combinedData = useMemo(() => {
-    const dateMap = new Map<string, { right: number; issue: number }>()
-    
-    // Initialize with all dates from both datasets
-    const allData = [...rightData, ...issueData]
+    const dateMap = new Map<string, { right: number; issue: number; honest: number }>()
+
+    // Initialize with all dates from every dataset
+    const allData = [...rightData, ...issueData, ...honestData]
     allData.forEach(({ date }) => {
       if (!dateMap.has(date)) {
-        dateMap.set(date, { right: 0, issue: 0 })
+        dateMap.set(date, { right: 0, issue: 0, honest: 0 })
       }
     })
-    
+
     // Populate right data
     rightData.forEach(({ date, count }) => {
       const entry = dateMap.get(date)!
       entry.right = count
     })
-    
+
     // Populate issue data
     issueData.forEach(({ date, count }) => {
       const entry = dateMap.get(date)!
       entry.issue = count
     })
-    
+
+    // Populate honest data
+    honestData.forEach(({ date, count }) => {
+      const entry = dateMap.get(date)!
+      entry.honest = count
+    })
+
     // Convert to array, sort by date, and take only the last 14 days
     const allEntries = Array.from(dateMap.entries())
       .map(([date, counts]) => ({
         date,
         right: counts.right,
         issue: counts.issue,
-        total: counts.right + counts.issue
+        honest: counts.honest,
+        total: counts.right + counts.issue + counts.honest
       }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    
+
     // Return only the last 14 days
     return allEntries.slice(-14)
-  }, [rightData, issueData])
+  }, [rightData, issueData, honestData])
 
   const maxCount = useMemo(() => {
-    return Math.max(...combinedData.map(d => Math.max(d.right, d.issue)), 1)
+    return Math.max(...combinedData.map(d => Math.max(d.right, d.issue, d.honest)), 1)
   }, [combinedData])
 
   if (combinedData.length === 0) {
@@ -73,6 +81,10 @@ export default function Chart({ rightData, issueData }: ChartProps) {
         <div className="flex items-center space-x-2">
           <div className="w-4 h-4 bg-gradient-to-r from-orange-500 to-red-500 rounded"></div>
           <span className="text-gray-700">"I can see the issue"</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <div className="w-4 h-4 bg-gradient-to-r from-teal-500 to-emerald-500 rounded"></div>
+          <span className="text-gray-700">"The honest truth"</span>
         </div>
       </div>
 
@@ -109,6 +121,7 @@ export default function Chart({ rightData, issueData }: ChartProps) {
             {combinedData.map((item, index) => {
               const rightHeight = (item.right / maxCount) * 160
               const issueHeight = (item.issue / maxCount) * 160
+              const honestHeight = (item.honest / maxCount) * 160
               
               return (
                 <div key={index} className="flex flex-col items-center space-y-2 flex-1 min-w-0">
@@ -165,6 +178,32 @@ export default function Chart({ rightData, issueData }: ChartProps) {
                         </div>
                       </div>
                     </div>
+
+                    {/* Honest bar */}
+                    <div className="flex flex-col justify-end">
+                      <div
+                        className="bg-gradient-to-t from-teal-500 to-emerald-500 rounded-t-sm transition-all duration-300 hover:from-teal-600 hover:to-emerald-600 cursor-pointer group relative"
+                        style={{
+                          height: `${honestHeight}px`,
+                          width: '8px',
+                          minHeight: item.honest > 0 ? '2px' : '0px'
+                        }}
+                      >
+                        <div className="absolute -top-8 -left-56 p-4 bg-white text-gray-800 text-sm rounded-lg shadow-lg border border-gray-200 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50" style={{ minWidth: '220px', whiteSpace: 'normal' }}>
+                          <p className="font-semibold text-gray-800 mb-1">
+                            {new Date(item.date).toLocaleDateString('en-US', {
+                              weekday: 'long',
+                              month: 'long',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
+                          </p>
+                          <p className="text-emerald-600">
+                            {item.honest === 1 ? '1 time' : `${item.honest} times`} honest
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Date label - horizontal */}
@@ -194,6 +233,12 @@ export default function Chart({ rightData, issueData }: ChartProps) {
             {issueData.reduce((sum, d) => sum + d.count, 0)}
           </span>
           <span className="ml-1">total "issues"</span>
+        </div>
+        <div>
+          <span className="font-medium text-emerald-600">
+            {honestData.reduce((sum, d) => sum + d.count, 0)}
+          </span>
+          <span className="ml-1">total "honest"</span>
         </div>
       </div>
     </div>

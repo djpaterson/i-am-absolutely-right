@@ -37,6 +37,7 @@ const API_URL = process.env.COUNTER_API_URL || 'https://your-domain.com/api/incr
 const API_SECRET = process.env.API_SECRET;
 const ABSOLUTELY_RIGHT_PHRASE = /you(?:'re| are)\s+(?:(?:absolutely|completely)\s+)?(?:right|correct)\b/i;
 const ISSUE_PATTERN = /(?:now\s+)?i\s+(?:can\s+)?(?:see|understand|get|found|spot|spotted)\s+the\s+(?:issue|problem|bug)/i;
+const HONEST_PATTERN = /\bhonest(?:ly)?\b/gi;
 
 // Validate configuration
 if (!API_SECRET) {
@@ -161,8 +162,10 @@ function processInput() {
         let allApiPromises = [];
         let rightCount = 0;
         let issueCount = 0;
+        let honestCount = 0;
         let lastIssuePhrase = '';
         let lastAbsolutelyRightPhrase = '';
+        let lastHonestPhrase = '';
         
         for (const assistantMessage of assistantMessages) {
           const messageId = assistantMessage.uuid;
@@ -200,7 +203,18 @@ function processInput() {
             lastIssuePhrase = issueMatches[0];
             allApiPromises.push(makeAPIRequest({type: 'issue'}));
           }
-          
+
+          // Check for honesty phrases ("the honest truth", "honestly", "to be honest" …)
+          const honestMatches = textContent.match(HONEST_PATTERN);
+          if (honestMatches && honestMatches.length > 0) {
+            honestCount += honestMatches.length;
+            lastHonestPhrase = honestMatches[0];
+
+            for (let i = 0; i < honestMatches.length; i++) {
+              allApiPromises.push(makeAPIRequest({type: 'honest'}));
+            }
+          }
+
           // Mark this message as processed
           processedMessageIds.add(messageId);
         }
@@ -215,6 +229,9 @@ function processInput() {
           } else {
             allMessages.push(`🔍 Detected ${issueCount} issue phrases!`);
           }
+        }
+        if (honestCount > 0) {
+          allMessages.push(`🫡 Detected "${lastHonestPhrase}" ${honestCount} time(s)!`);
         }
         
         // Wait for all API requests to complete

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import CounterDisplay from './components/CounterDisplay'
 import IssueCounterDisplay from './components/IssueCounterDisplay'
+import HonestCounterDisplay from './components/HonestCounterDisplay'
 import Chart from './components/Chart'
 
 interface CounterData {
@@ -13,12 +14,14 @@ interface CounterData {
 interface Stats {
   right: CounterData
   issue: CounterData
+  honest: CounterData
 }
 
 export default function Home() {
-  const [stats, setStats] = useState<Stats>({ 
+  const [stats, setStats] = useState<Stats>({
     right: { total: 0, dailyCounts: [] },
-    issue: { total: 0, dailyCounts: [] }
+    issue: { total: 0, dailyCounts: [] },
+    honest: { total: 0, dailyCounts: [] }
   })
   const [isLoading, setIsLoading] = useState(true)
 
@@ -58,7 +61,7 @@ export default function Home() {
         </div>
 
         {/* Counters Grid */}
-        <div className="grid md:grid-cols-2 gap-8 w-full">
+        <div className="grid md:grid-cols-3 gap-8 w-full">
           {/* Absolutely Right Counter */}
           <div className="space-y-6">
             <div className="text-center">
@@ -80,6 +83,17 @@ export default function Home() {
             </div>
             <IssueCounterDisplay count={stats.issue.total} isLoading={isLoading} />
           </div>
+
+          {/* Honesty Counter */}
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-teal-500 to-emerald-500 bg-clip-text text-transparent">
+                "The honest truth..."
+              </h2>
+              <p className="text-gray-600 mt-2">Candour tracker</p>
+            </div>
+            <HonestCounterDisplay count={stats.honest.total} isLoading={isLoading} />
+          </div>
         </div>
 
         {/* Combined Chart */}
@@ -88,42 +102,52 @@ export default function Home() {
             <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">
               Phrase Activity Comparison (Last 14 Days)
             </h3>
-            <Chart rightData={stats.right.dailyCounts} issueData={stats.issue.dailyCounts} />
+            <Chart rightData={stats.right.dailyCounts} issueData={stats.issue.dailyCounts} honestData={stats.honest.dailyCounts} />
           </div>
         </div>
 
         {/* Fun Facts */}
-        <div className="grid md:grid-cols-4 gap-4 text-center">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
           <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
             <div className="text-2xl font-bold text-blue-600">
-              {stats.right.dailyCounts.length > 0 
+              {stats.right.dailyCounts.length > 0
                 ? Math.max(...stats.right.dailyCounts.map(d => d.count))
                 : 0}
             </div>
             <div className="text-gray-600 mt-2 text-sm">Peak "Right" Day</div>
           </div>
-          
+
           <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
             <div className="text-2xl font-bold text-orange-600">
-              {stats.issue.dailyCounts.length > 0 
+              {stats.issue.dailyCounts.length > 0
                 ? Math.max(...stats.issue.dailyCounts.map(d => d.count))
                 : 0}
             </div>
             <div className="text-gray-600 mt-2 text-sm">Peak Issue Day</div>
           </div>
-          
+
+          <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <div className="text-2xl font-bold text-emerald-600">
+              {stats.honest.dailyCounts.length > 0
+                ? Math.max(...stats.honest.dailyCounts.map(d => d.count))
+                : 0}
+            </div>
+            <div className="text-gray-600 mt-2 text-sm">Peak Honest Day</div>
+          </div>
+
           <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
             <div className="text-2xl font-bold text-green-600">
-              {stats.right.total + stats.issue.total}
+              {stats.right.total + stats.issue.total + stats.honest.total}
             </div>
             <div className="text-gray-600 mt-2 text-sm">Total Phrases</div>
           </div>
-          
+
           <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
             <div className="text-2xl font-bold text-purple-600">
               {Math.max(
                 stats.right.dailyCounts.filter(d => d.count > 0).length,
-                stats.issue.dailyCounts.filter(d => d.count > 0).length
+                stats.issue.dailyCounts.filter(d => d.count > 0).length,
+                stats.honest.dailyCounts.filter(d => d.count > 0).length
               )}
             </div>
             <div className="text-gray-600 mt-2 text-sm">Most Active Days</div>

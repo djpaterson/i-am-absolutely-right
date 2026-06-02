@@ -8,9 +8,9 @@ export async function POST(request: NextRequest) {
     const { type = 'right' } = body
     
     // Validate counter type
-    if (!['right', 'issue'].includes(type)) {
+    if (!['right', 'issue', 'honest'].includes(type)) {
       return NextResponse.json(
-        { error: 'Invalid counter type. Must be "right" or "issue"' },
+        { error: 'Invalid counter type. Must be "right", "issue" or "honest"' },
         { status: 400 }
       )
     }
@@ -58,8 +58,12 @@ export async function POST(request: NextRequest) {
       const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD format
       
       // Set Redis keys based on counter type
-      const totalKey = type === 'right' ? 'counter:total' : 'issue-counter:total'
-      const dailyKey = type === 'right' ? `daily:${today}` : `issue-daily:${today}`
+      const keyPrefixes: Record<string, { total: string; daily: string }> = {
+        right: { total: 'counter:total', daily: `daily:${today}` },
+        issue: { total: 'issue-counter:total', daily: `issue-daily:${today}` },
+        honest: { total: 'honest-counter:total', daily: `honest-daily:${today}` },
+      }
+      const { total: totalKey, daily: dailyKey } = keyPrefixes[type]
       
       // Increment counters atomically
       const [newTotal, newDailyCount] = await Promise.all([

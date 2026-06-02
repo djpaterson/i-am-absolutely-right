@@ -8,13 +8,14 @@ export async function GET() {
       // Return demo data for local development
       const rightDailyCounts: { date: string; count: number }[] = []
       const issueDailyCounts: { date: string; count: number }[] = []
+      const honestDailyCounts: { date: string; count: number }[] = []
       const today = new Date()
-      
+
       for (let i = 29; i >= 0; i--) {
         const date = new Date(today)
         date.setDate(date.getDate() - i)
         const dateStr = date.toISOString().split('T')[0]
-        
+
         // Generate some demo data
         rightDailyCounts.push({
           date: dateStr,
@@ -24,8 +25,12 @@ export async function GET() {
           date: dateStr,
           count: Math.floor(Math.random() * 3)
         })
+        honestDailyCounts.push({
+          date: dateStr,
+          count: Math.floor(Math.random() * 4)
+        })
       }
-      
+
       return NextResponse.json({
         right: {
           total: 42,
@@ -34,6 +39,10 @@ export async function GET() {
         issue: {
           total: 18,
           dailyCounts: issueDailyCounts
+        },
+        honest: {
+          total: 27,
+          dailyCounts: honestDailyCounts
         },
         lastUpdated: new Date().toISOString(),
         demo: true
@@ -45,43 +54,48 @@ export async function GET() {
     await redis.connect()
     
     try {
-      // Get totals for both counters
-      const [rightTotal, issueTotal] = await Promise.all([
+      // Get totals for all counters
+      const [rightTotal, issueTotal, honestTotal] = await Promise.all([
         redis.get('counter:total'),
-        redis.get('issue-counter:total')
+        redis.get('issue-counter:total'),
+        redis.get('honest-counter:total')
       ])
-      
+
       const rightDailyCounts: { date: string; count: number }[] = []
       const issueDailyCounts: { date: string; count: number }[] = []
+      const honestDailyCounts: { date: string; count: number }[] = []
       const today = new Date()
-      
+
       // Get daily data for last 30 days
       const datePromises = []
       for (let i = 29; i >= 0; i--) {
         const date = new Date(today)
         date.setDate(date.getDate() - i)
         const dateStr = date.toISOString().split('T')[0]
-        
+
         datePromises.push(
           Promise.all([
             redis.get(`daily:${dateStr}`),
-            redis.get(`issue-daily:${dateStr}`)
-          ]).then(([rightCount, issueCount]) => ({
+            redis.get(`issue-daily:${dateStr}`),
+            redis.get(`honest-daily:${dateStr}`)
+          ]).then(([rightCount, issueCount, honestCount]) => ({
             date: dateStr,
             rightCount: Number(rightCount || 0),
-            issueCount: Number(issueCount || 0)
+            issueCount: Number(issueCount || 0),
+            honestCount: Number(honestCount || 0)
           }))
         )
       }
-      
+
       const dailyData = await Promise.all(datePromises)
-      
+
       // Format data for response
-      dailyData.forEach(({ date, rightCount, issueCount }) => {
+      dailyData.forEach(({ date, rightCount, issueCount, honestCount }) => {
         rightDailyCounts.push({ date, count: rightCount })
         issueDailyCounts.push({ date, count: issueCount })
+        honestDailyCounts.push({ date, count: honestCount })
       })
-      
+
       return NextResponse.json({
         right: {
           total: Number(rightTotal || 0),
@@ -90,6 +104,10 @@ export async function GET() {
         issue: {
           total: Number(issueTotal || 0),
           dailyCounts: issueDailyCounts
+        },
+        honest: {
+          total: Number(honestTotal || 0),
+          dailyCounts: honestDailyCounts
         },
         lastUpdated: new Date().toISOString()
       })
